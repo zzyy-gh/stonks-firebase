@@ -1,0 +1,27 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "ticker_meta",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dayc",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "monc",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "weekc",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
