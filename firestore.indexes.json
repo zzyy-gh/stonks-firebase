@@ -9,16 +9,36 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "weekc",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "ticker_meta",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "dayc",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "ticker_meta",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "date",
           "order": "ASCENDING"
         },
         {
           "fieldPath": "monc",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "weekc",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     }
