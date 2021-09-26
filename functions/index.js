@@ -4,6 +4,7 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
 const db = admin.firestore();
+const metaRef = db.collection("ticker_meta");
 
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
@@ -98,4 +99,89 @@ exports.addSrapedMeta = functions
     // Send back a message that we've successfully written the message
     // res.json({ result: `Data received: ${data}` });
     res.json({ result: "Upload successful." });
+  });
+
+exports.addSrapedInfo = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 540 })
+  .region("asia-southeast2")
+  .https.onRequest(async (req, res) => {
+    // Grab the text parameter.
+    let data = req.body.data;
+    console.log(data.length);
+
+    let structuredData = [];
+    let batchArray = [];
+    const batchSize = 500;
+
+    if (data.length > 0) {
+      for (
+        let loop = 0;
+        loop < Math.floor((data.length - 1) / batchSize) + 1;
+        loop++
+      ) {
+        structuredData.push([]);
+      }
+      data.forEach((item, index) => {
+        structuredData[Math.floor(index / batchSize)].push(item);
+      });
+    } else {
+      res.json({ result: "No data to be uploaded." });
+    }
+
+    data = null;
+
+    structuredData.forEach(async (array) => {
+      // Get a new write batch
+      let batch = db.batch();
+
+      array.forEach((value) => {
+        const ref = db.collection("ticker_info").doc(value["tkr"]);
+        delete value["tkr"];
+        batch.set(ref, value);
+      });
+
+      batchArray.push(batch);
+    });
+
+    for (const batch of batchArray) {
+      await batch.commit();
+      console.log("Batch upload is successful.");
+    }
+
+    // Send back a message that we've successfully written the message
+    // res.json({ result: `Data received: ${data}` });
+    res.json({ result: "Upload successful." });
+  });
+
+exports.getDateRange = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 540 })
+  .region("asia-southeast2")
+  .https.onRequest(async (req, res) => {
+    var latest;
+    var earliest;
+    const promise1 = await metaRef
+      .orderBy("date", "desc")
+      .limit(1)
+      .get()
+      .then((snapshot) => {
+        snapshot.docs.forEach((doc) => {
+          latest = doc.data();
+          console.log(doc.id);
+        });
+      });
+    const promise2 = await metaRef
+      .orderBy("date")
+      .limit(1)
+      .get()
+      .then((snapshot) => {
+        snapshot.docs.forEach((doc) => {
+          earliest = doc.data();
+          console.log(doc.id);
+        });
+      });
+
+    Promise.all([promise1, promise2]);
+
+    console.log("latest earliest:", latest, earliest);
+    res.json({ latest: latest, earliest: earliest });
   });
