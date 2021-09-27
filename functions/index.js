@@ -1,4 +1,7 @@
 const functions = require("firebase-functions");
+var cors = require("cors")({
+  origin: true,
+});
 
 // The Firebase Admin SDK to access Firestore.
 const admin = require("firebase-admin");
@@ -157,77 +160,79 @@ exports.getDateRange = functions
   .runWith({ memory: "512MB", timeoutSeconds: 540 })
   .region("asia-southeast2")
   .https.onRequest(async (req, res) => {
-    var latest;
-    var earliest;
-    const promise1 = await metaRef
-      .orderBy("date", "desc")
-      .limit(1)
-      .get()
-      .then((snapshot) => {
-        snapshot.docs.forEach((doc) => {
-          latest = doc.data();
-          console.log(doc.id);
+    cors(req, res, async () => {
+      var latest;
+      var earliest;
+      const promise1 = await metaRef
+        .orderBy("date", "desc")
+        .limit(1)
+        .get()
+        .then((snapshot) => {
+          snapshot.docs.forEach((doc) => {
+            latest = doc.data();
+          });
         });
-      });
-    const promise2 = await metaRef
-      .orderBy("date")
-      .limit(1)
-      .get()
-      .then((snapshot) => {
-        snapshot.docs.forEach((doc) => {
-          earliest = doc.data();
-          console.log(doc.id);
+      const promise2 = await metaRef
+        .orderBy("date")
+        .limit(1)
+        .get()
+        .then((snapshot) => {
+          snapshot.docs.forEach((doc) => {
+            earliest = doc.data();
+          });
         });
-      });
 
-    Promise.all([promise1, promise2]);
+      Promise.all([promise1, promise2]);
 
-    console.log("latest earliest:", latest, earliest);
-    res.json({ latest: latest, earliest: earliest });
+      console.log("latest earliest:", latest["date"], earliest["date"]);
+      res.json({ latest: latest["date"], earliest: earliest["date"] });
+    });
   });
 
 exports.getPerfData = functions
   .runWith({ memory: "512MB", timeoutSeconds: 540 })
   .region("asia-southeast2")
   .https.onRequest(async (req, res) => {
-    var date = parseInt(req.query.date);
-    var dayLs = [];
-    var weekLs = [];
-    var monthLs = [];
-    const dayc = "dayc";
-    const weekc = "weekc";
-    const monc = "monc";
-    const dayLimit = 5;
-    const wkLimit = 5;
-    const monLimit = 20;
+    cors(req, res, async () => {
+      var date = parseInt(req.query.date);
+      var dayLs = [];
+      var weekLs = [];
+      var monthLs = [];
+      const dayc = "dayc";
+      const weekc = "weekc";
+      const monc = "monc";
+      const dayLimit = 5;
+      const wkLimit = 5;
+      const monLimit = 20;
 
-    const retrieve = async (period, limit) => {
-      list = [];
-      await metaRef
-        .where("date", "==", date)
-        .orderBy(String(period), "desc")
-        .limit(parseInt(limit))
-        .get()
-        .then((snapshot) => {
-          snapshot.docs.forEach((doc) => {
-            data = doc.data();
-            data["uuid"] = doc.id;
-            list.push(data);
+      const retrieve = async (period, limit) => {
+        list = [];
+        await metaRef
+          .where("date", "==", date)
+          .orderBy(String(period), "desc")
+          .limit(parseInt(limit))
+          .get()
+          .then((snapshot) => {
+            snapshot.docs.forEach((doc) => {
+              data = doc.data();
+              data["uuid"] = doc.id;
+              list.push(data);
+            });
           });
-        });
-      return list;
-    };
+        return list;
+      };
 
-    const promise = await Promise.all([
-      await retrieve(dayc, dayLimit),
-      await retrieve(weekc, wkLimit),
-      await retrieve(monc, monLimit),
-    ]);
+      const promise = await Promise.all([
+        await retrieve(dayc, dayLimit),
+        await retrieve(weekc, wkLimit),
+        await retrieve(monc, monLimit),
+      ]);
 
-    dayLs = promise[0];
-    weekLs = promise[1];
-    monthLs = promise[2];
+      dayLs = promise[0];
+      weekLs = promise[1];
+      monthLs = promise[2];
 
-    console.log("length:", dayLs.length, weekLs.length, monthLs.length);
-    res.json({ day: dayLs, week: weekLs, month: monthLs });
+      console.log("length:", dayLs.length, weekLs.length, monthLs.length);
+      res.json({ day: dayLs, week: weekLs, month: monthLs });
+    });
   });
