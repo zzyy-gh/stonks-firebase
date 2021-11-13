@@ -236,3 +236,46 @@ exports.getPerfData = functions
       res.json({ day: dayLs, week: weekLs, month: monthLs });
     });
   });
+
+exports.getPerfStock = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 540 })
+  .region("asia-southeast2")
+  .https.onRequest(async (req, res) => {
+    cors(req, res, async () => {
+      var minChg = 80;
+      var dayLs = [];
+      var weekLs = [];
+      var monthLs = [];
+      const dayc = "dayc";
+      const weekc = "weekc";
+      const monc = "monc";
+
+      const retrieve = async (period) => {
+        list = [];
+        await metaRef
+          .where(String(period), ">=", minChg)
+          .get()
+          .then((snapshot) => {
+            snapshot.docs.forEach((doc) => {
+              data = doc.data();
+              data["uuid"] = doc.id;
+              list.push(data);
+            });
+          });
+        return list;
+      };
+
+      const promise = await Promise.all([
+        await retrieve(dayc),
+        await retrieve(weekc),
+        await retrieve(monc),
+      ]);
+
+      dayLs = promise[0];
+      weekLs = promise[1];
+      monthLs = promise[2];
+
+      console.log("length:", dayLs.length, weekLs.length, monthLs.length);
+      res.json({ day: dayLs, week: weekLs, month: monthLs });
+    });
+  });
