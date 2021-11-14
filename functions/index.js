@@ -242,7 +242,8 @@ exports.getPerfStock = functions
   .region("asia-southeast2")
   .https.onRequest(async (req, res) => {
     cors(req, res, async () => {
-      var minChg = 80;
+      var minChg1 = 80;
+      var minChg2 = 100;
       var dayLs = [];
       var weekLs = [];
       var monthLs = [];
@@ -250,7 +251,7 @@ exports.getPerfStock = functions
       const weekc = "weekc";
       const monc = "monc";
 
-      const retrieve = async (period) => {
+      const retrieve = async (period, minChg) => {
         list = [];
         await metaRef
           .where(String(period), ">=", minChg)
@@ -266,9 +267,9 @@ exports.getPerfStock = functions
       };
 
       const promise = await Promise.all([
-        await retrieve(dayc),
-        await retrieve(weekc),
-        await retrieve(monc),
+        await retrieve(dayc, minChg1),
+        await retrieve(weekc, minChg2),
+        await retrieve(monc, minChg2),
       ]);
 
       dayLs = promise[0];
